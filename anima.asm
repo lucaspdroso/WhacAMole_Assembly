@@ -23,7 +23,6 @@
 
 
       include animate.inc   ; local includes for this file
-
 ; continuação do .data
 
         EventStop BOOL FALSE
@@ -52,6 +51,9 @@ start:
 
       invoke LoadBitmap,hInstance,100
       mov hBmp, eax
+
+      invoke LoadBitmap,hInstance,101
+      mov hBmp2, eax
 
       invoke GetCommandLine
       mov CommandLine, eax
@@ -107,7 +109,8 @@ WinMain proc hInst     :DWORD,
       ;================================
 
       mov Wwd, 240
-      mov Wht, 400
+      ;mov Wht, 400
+      mov Wht, 600
 
       invoke GetSystemMetrics,SM_CXSCREEN
       invoke TopXY,Wwd,eax
@@ -266,6 +269,9 @@ Paint_Proc proc hWin:DWORD, hDC:DWORD, movit:DWORD
     LOCAL var1 :DWORD
     LOCAL var2 :DWORD
     LOCAL var3 :DWORD
+    RGB 255, 255, 255
+
+    mov ebx, eax
 
     invoke CreateCompatibleDC,hDC
     mov memDC, eax
@@ -277,15 +283,16 @@ mov hOld, eax
   ; -------------------
   ; for normal repaint
   ; -------------------
-      invoke BitBlt,hDC,0  ,0  ,80,125,memDC,0,0,SRCCOPY
-      invoke BitBlt,hDC,80 ,0  ,80,125,memDC,0,0,SRCCOPY
-      invoke BitBlt,hDC,160,0  ,80,125,memDC,0,0,SRCCOPY
-      invoke BitBlt,hDC,0  ,125,80,125,memDC,0,0,SRCCOPY
-      invoke BitBlt,hDC,80 ,125,80,125,memDC,0,0,SRCCOPY
-      invoke BitBlt,hDC,160,125,80,125,memDC,0,0,SRCCOPY
-      invoke BitBlt,hDC,0  ,250,80,125,memDC,0,0,SRCCOPY
-      invoke BitBlt,hDC,80 ,250,80,125,memDC,0,0,SRCCOPY
-      invoke BitBlt,hDC,160,250,80,125,memDC,0,0,SRCCOPY
+      ;invoke InvalidateRect, hWin, NULL , TRUE 
+      invoke TransparentBlt, hDC, 0  , 25 , 80, 125, memDC, 0, 0, 80, 125, ebx
+      invoke TransparentBlt, hDC, 80 , 25 , 80, 125, memDC, 0, 0, 80, 125, ebx
+      invoke TransparentBlt, hDC, 160, 25 , 80, 125, memDC, 0, 0, 80, 125, ebx
+      invoke TransparentBlt, hDC, 0  , 150, 80, 125, memDC, 0, 0, 80, 125, ebx
+      invoke TransparentBlt, hDC, 80 , 150, 80, 125, memDC, 0, 0, 80, 125, ebx
+      invoke TransparentBlt, hDC, 160, 150, 80, 125, memDC, 0, 0, 80, 125, ebx
+      invoke TransparentBlt, hDC, 0  , 275, 80, 125, memDC, 0, 0, 80, 125, ebx
+      invoke TransparentBlt, hDC, 80 , 275, 80, 125, memDC, 0, 0, 80, 125, ebx
+      invoke TransparentBlt, hDC, 160, 275, 80, 125, memDC, 0, 0, 80, 125, ebx
 
     .else
   ; --------------------------
@@ -303,15 +310,16 @@ mov hOld, eax
       ; Read across the double bitmap 1 pixel at a time
       ; and display a set rectangle size on the screen
       ; ------------------------------------------------
-        invoke BitBlt,hDC,0  ,0  ,80,125,memDC,var1,0,SRCCOPY
-        invoke BitBlt,hDC,80 ,0  ,80,125,memDC,var1,0,SRCCOPY
-        invoke BitBlt,hDC,160,0  ,80,125,memDC,var1,0,SRCCOPY
-        invoke BitBlt,hDC,0  ,125,80,125,memDC,var1,0,SRCCOPY
-        invoke BitBlt,hDC,80 ,125,80,125,memDC,var1,0,SRCCOPY
-        invoke BitBlt,hDC,160,125,80,125,memDC,var1,0,SRCCOPY
-        invoke BitBlt,hDC,0  ,250,80,125,memDC,var1,0,SRCCOPY
-        invoke BitBlt,hDC,80 ,250,80,125,memDC,var1,0,SRCCOPY
-        invoke BitBlt,hDC,160,250,80,125,memDC,var1,0,SRCCOPY
+        ;invoke InvalidateRect, hWin, NULL , TRUE 
+        invoke TransparentBlt, hDC, 0  , 25 , 80, 125, memDC, var1, 0, 80, 125, ebx
+        invoke TransparentBlt, hDC, 80 , 25 , 80, 125, memDC, var1, 0, 80, 125, ebx
+        invoke TransparentBlt, hDC, 160, 25 , 80, 125, memDC, var1, 0, 80, 125, ebx
+        invoke TransparentBlt, hDC, 0  , 150, 80, 125, memDC, var1, 0, 80, 125, ebx
+        invoke TransparentBlt, hDC, 80 , 150, 80, 125, memDC, var1, 0, 80, 125, ebx
+        invoke TransparentBlt, hDC, 160, 150, 80, 125, memDC, var1, 0, 80, 125, ebx
+        invoke TransparentBlt, hDC, 0  , 275, 80, 125, memDC, var1, 0, 80, 125, ebx
+        invoke TransparentBlt, hDC, 80 , 275, 80, 125, memDC, var1, 0, 80, 125, ebx
+        invoke TransparentBlt, hDC, 160, 275, 80, 125, memDC, var1, 0, 80, 125, ebx
 
       ; -----------------------
       ; Simple delay technique
@@ -345,10 +353,17 @@ Paint_Proc endp
 ; ########################################################################
 
 ThreadProc PROC USES ecx Param:DWORD
-    LOCAL  var1:DWORD
-    LOCAL  hDC :DWORD
-    LOCAL hOld:DWORD
-    LOCAL memDC:DWORD
+    LOCAL  var1  :DWORD
+    LOCAL  hDC   :DWORD
+    LOCAL  hDC2  :DWORD
+    LOCAL hOld   :DWORD
+    LOCAL hOld2  :DWORD
+    LOCAL memDC  :DWORD
+    LOCAL memDC2 :DWORD
+
+    RGB 255, 255, 255
+
+    mov ebx, eax
 
 
         mov     var1,0
@@ -371,6 +386,16 @@ ThreadProc PROC USES ecx Param:DWORD
 
 
                 invoke GetDC, hWnd
+                mov     hDC2,eax
+
+                invoke CreateCompatibleDC,hDC2
+                mov memDC2, eax
+                invoke SelectObject,memDC2,hBmp2
+                mov hOld2, eax
+
+                invoke BitBlt,hDC2,0,0,240,443,memDC2,0,0,SRCCOPY
+
+                invoke GetDC, hWnd
                 mov     hDC,eax
 
                 invoke CreateCompatibleDC,hDC
@@ -378,16 +403,16 @@ ThreadProc PROC USES ecx Param:DWORD
                 invoke SelectObject,memDC,hBmp
                 mov hOld, eax
 
-
-                invoke BitBlt,hDC,0  ,0  ,80,125,memDC,var1,0,SRCCOPY
-                invoke BitBlt,hDC,80 ,0  ,80,125,memDC,var1,0,SRCCOPY
-                invoke BitBlt,hDC,160,0  ,80,125,memDC,var1,0,SRCCOPY
-                invoke BitBlt,hDC,0  ,125,80,125,memDC,var1,0,SRCCOPY
-                invoke BitBlt,hDC,80 ,125,80,125,memDC,var1,0,SRCCOPY
-                invoke BitBlt,hDC,160,125,80,125,memDC,var1,0,SRCCOPY
-                invoke BitBlt,hDC,0  ,250,80,125,memDC,var1,0,SRCCOPY
-                invoke BitBlt,hDC,80 ,250,80,125,memDC,var1,0,SRCCOPY
-                invoke BitBlt,hDC,160,250,80,125,memDC,var1,0,SRCCOPY
+                ;invoke InvalidateRect, hWin, NULL , TRUE 
+                invoke TransparentBlt, hDC, 0  , 25 , 80, 125, memDC, var1, 0, 80, 125, ebx
+                invoke TransparentBlt, hDC, 80 , 25 , 80, 125, memDC, var1, 0, 80, 125, ebx
+                invoke TransparentBlt, hDC, 160, 25 , 80, 125, memDC, var1, 0, 80, 125, ebx
+                invoke TransparentBlt, hDC, 0  , 150, 80, 125, memDC, var1, 0, 80, 125, ebx
+                invoke TransparentBlt, hDC, 80 , 150, 80, 125, memDC, var1, 0, 80, 125, ebx
+                invoke TransparentBlt, hDC, 160, 150, 80, 125, memDC, var1, 0, 80, 125, ebx
+                invoke TransparentBlt, hDC, 0  , 275, 80, 125, memDC, var1, 0, 80, 125, ebx
+                invoke TransparentBlt, hDC, 80 , 275, 80, 125, memDC, var1, 0, 80, 125, ebx
+                invoke TransparentBlt, hDC, 160, 275, 80, 125, memDC, var1, 0, 80, 125, ebx
                 
                 invoke SelectObject,hDC,hOld
                 invoke DeleteDC,memDC

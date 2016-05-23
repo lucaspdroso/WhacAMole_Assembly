@@ -10,6 +10,7 @@
       include \MASM32\INCLUDE\Comctl32.inc
       include \MASM32\INCLUDE\comdlg32.inc
       include \MASM32\INCLUDE\shell32.inc
+      include \MASM32\INCLUDE\Msimg32.inc
 
 ;     libraries
 ;     ~~~~~~~~~
@@ -21,6 +22,7 @@
       includelib \MASM32\LIB\Comctl32.lib
       includelib \MASM32\LIB\comdlg32.lib
       includelib \MASM32\LIB\shell32.lib
+      includelib \MASM32\LIB\Msimg32.lib
 
 ; #########################################################################
 
@@ -38,6 +40,14 @@
       ; Local macros
       ;=============
 
+      RGB macro red,green,blue
+                xor eax,eax
+                mov ah,blue
+                shl eax,8
+                mov ah,green
+                mov al,red
+      ENDM
+
       szText MACRO Name, Text:VARARG
         LOCAL lbl
           jmp lbl
@@ -53,7 +63,7 @@
       return MACRO arg
         mov eax, arg
         ret
-      ENDM
+      ENDM              
 
     .data
         CommandLine   dd 0
@@ -61,6 +71,7 @@
         hInstance     dd 0
         hIcon         dd 0
         hBmp          dd 0
+	hBmp2	      dd 0
         szDisplayName db "Animate",0
         
 
