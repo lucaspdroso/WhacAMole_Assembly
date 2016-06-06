@@ -22,23 +22,30 @@
         WM_TIMEOUT equ WM_USER+103h
 
 
-      include animate.inc   ; local includes for this file
+        include animate.inc   ; local includes for this file
 ; continuação do .data
 
         EventStop BOOL FALSE
-        ok1             db "Evento 0",0
+        ok1             db "Você perdeu!! Seu coco!",0
         timeout      db "Ocorreu time out ",0
 
 .data?
 
-        ThreadID    DWORD ?
+        ThreadID     DWORD ?
         ThreadID1    DWORD ?
         ThreadID2    DWORD ?
 
-        hThread     DWORD ?
+        hThread      DWORD ?
 
-        hEventStart HANDLE ?
-        hEventStop HANDLE ?
+        hEventStart  HANDLE ?
+        hEventStop   HANDLE ?
+
+        auxiliar     DWORD ?
+        cabecacima   DWORD ?
+        acertos      DWORD ?
+        clicou       DWORD ?
+        erros        DWORD ?
+        recomecou    DWORD ?
 
 
 ; #########################################################################
@@ -46,14 +53,24 @@
 .code
 
 start:
+      mov auxiliar, 0
+      mov cabecacima, 0
+      mov acertos,0
+      mov erros,0
+      mov clicou,0
+      mov recomecou,0
+    
       invoke GetModuleHandle, NULL
       mov hInstance, eax
 
-      invoke LoadBitmap,hInstance,100
+      invoke LoadBitmap,hInstance,101
       mov hBmp, eax
 
       invoke LoadBitmap,hInstance,101
       mov hBmp2, eax
+
+      invoke LoadBitmap,hInstance,102
+      mov hBmp3, eax
 
       invoke GetCommandLine
       mov CommandLine, eax
@@ -152,8 +169,8 @@ WinMain proc hInst     :DWORD,
 
 WinMain endp
 
-; #########################################################################
 
+; #########################################################################
 WndProc proc hWin   :DWORD,
              uMsg   :DWORD,
              wParam :DWORD,
@@ -164,24 +181,79 @@ WndProc proc hWin   :DWORD,
     LOCAL caH    :DWORD
     LOCAL Rct    :RECT
     LOCAL hDC    :DWORD
+    LOCAL hOld   :DWORD
+    LOCAL memDC  :DWORD
+    LOCAL hDC2   :DWORD
+    LOCAL hOld2  :DWORD
+    LOCAL memDC2 :DWORD
     LOCAL Ps     :PAINTSTRUCT
     LOCAL buffer1[128]:BYTE  ; these are two spare buffers
     LOCAL buffer2[128]:BYTE  ; for text manipulation etc..
 
+     invoke  GetDC, hWnd
+     mov     hDC2,eax
+
+     invoke CreateCompatibleDC,hDC2
+     mov memDC2, eax
+     invoke SelectObject,memDC2,hBmp
+     mov hOld2, eax
+
     .if uMsg == WM_COMMAND
-      .if wParam == 500
-          invoke GetDC,hWin
-          mov hDC, eax
-          invoke Paint_Proc,hWin,hDC,1
-          invoke ReleaseDC,hWin,hDC
-        return 0
-      .elseif wParam == 501
-         invoke InvalidateRect, hWin, NULL , TRUE 
-         invoke PostMessage, hWnd, WM_OK, NULL,NULL
-
-      .elseif wParam == 502
-         invoke InvalidateRect, hWin, NULL , TRUE 
-
+      .if wParam == 500 && auxiliar == 0 && cabecacima == 1 
+            ;invoke PostMessage, hWnd, WM_OK, NULL,NULL
+            ;invoke BitBlt,hDC,0,0,80,125,memDC,240,0,SRCCOPY
+            inc acertos
+            mov clicou, 1
+      .elseif wParam == 501 && auxiliar == 3 && cabecacima == 1
+            ;invoke PostMessage, hWnd, WM_OK, NULL,NULL
+            ;invoke BitBlt,hDC,0,120,80,125,memDC,240,0,SRCCOPY
+            inc acertos
+            mov clicou, 1
+      .elseif wParam == 502 && auxiliar == 6 && cabecacima == 1
+            ;invoke PostMessage, hWnd, WM_OK, NULL,NULL
+            ;invoke BitBlt,hDC,0,240,80,125,memDC,240,0,SRCCOPY
+            inc acertos
+            mov clicou, 1
+      .elseif wParam == 503 && auxiliar == 1 && cabecacima == 1
+            ;invoke PostMessage, hWnd, WM_OK, NULL,NULL
+            ;invoke BitBlt,hDC,80,0,80,125,memDC,240,0,SRCCOPY
+            inc acertos
+            mov clicou, 1
+      .elseif wParam == 504 && auxiliar == 4 && cabecacima == 1
+            ;invoke PostMessage, hWnd, WM_OK, NULL,NULL
+            ;invoke BitBlt,hDC,80,120,80,125,memDC,240,0,SRCCOPY
+            inc acertos
+            mov clicou, 1
+      .elseif wParam == 505 && auxiliar == 7 && cabecacima == 1
+            ;invoke PostMessage, hWnd, WM_OK, NULL,NULL
+            ;invoke BitBlt,hDC,80,240,80,125,memDC,240,0,SRCCOPY
+            inc acertos
+            mov clicou, 1
+      .elseif wParam == 506 && auxiliar == 2 && cabecacima == 1
+            ;invoke PostMessage, hWnd, WM_OK, NULL,NULL
+            ;invoke BitBlt,hDC,160,0,80,125,memDC,240,0,SRCCOPY   
+            inc acertos 
+            mov clicou, 1        
+      .elseif wParam == 507 && auxiliar == 5 && cabecacima == 1
+            ;invoke PostMessage, hWnd, WM_OK, NULL,NULL
+            ;invoke BitBlt,hDC,160,120,80,125,memDC,240,0,SRCCOPY
+            inc acertos
+            mov clicou, 1
+      .elseif wParam == 508 && auxiliar == 8 && cabecacima == 1
+            ;invoke PostMessage, hWnd, WM_OK, NULL,NULL
+            ;invoke BitBlt,hDC,160,240,80,125,memDC,240,0,SRCCOPY
+            inc acertos
+            mov clicou, 1
+      .elseif wParam == 509 && erros > 3
+            mov recomecou,1
+            mov erros, 0
+            mov acertos, 0
+            mov clicou, 0
+            mov cabecacima,0
+            mov auxiliar,0
+            ;invoke PostMessage, hWnd, WM_OK, NULL,NULL     
+      .else
+            inc erros
       .endif
     .elseif uMsg == WM_OK
         invoke MessageBox, NULL, ADDR ok1, ADDR szDisplayName, MB_OK
@@ -189,10 +261,28 @@ WndProc proc hWin   :DWORD,
 
     ;======== menu commands ========
     .elseif uMsg == WM_CREATE
-        szText RunIt,"Run"
-        invoke PushButton,ADDR RunIt,hWin,40,90,100,25,500
+        szText RunIt," "
+        szText RunIts,"Jogar novamente"
 
-        invoke PushButton,ADDR RunIt,hWin,40,130,100,25,501
+        invoke PushButton,ADDR RunIt,hWin,0,0,80,120,500
+
+        invoke PushButton,ADDR RunIt,hWin,0,120,80,120,501
+
+        invoke PushButton,ADDR RunIt,hWin,0,240,80,120,502
+
+        invoke PushButton,ADDR RunIt,hWin,80,0,80,120,503
+
+        invoke PushButton,ADDR RunIt,hWin,80,120,80,120,504
+
+        invoke PushButton,ADDR RunIt,hWin,80,240,80,120,505
+
+        invoke PushButton,ADDR RunIt,hWin,160,0,80,120,506
+
+        invoke PushButton,ADDR RunIt,hWin,160,120,80,120,507
+
+        invoke PushButton,ADDR RunIt,hWin,160,240,80,120,508
+
+        invoke PushButton,ADDR RunIts,hWin,60,390,120,80,509
 
 ; criar thread
         invoke CreateEvent, NULL, TRUE, FALSE,NULL
@@ -202,18 +292,14 @@ WndProc proc hWin   :DWORD,
         mov     hEventStop, eax
 
         mov     eax, OFFSET ThreadProc
-        invoke CreateThread, NULL, NULL, eax, \
-                                               NULL, NORMAL_PRIORITY_CLASS, \
-                                               ADDR ThreadID 
+        invoke CreateThread, NULL, NULL, eax, NULL, NORMAL_PRIORITY_CLASS, ADDR ThreadID 
         mov     hThread,eax
-
 
     .elseif uMsg == WM_SIZE
 
     .elseif uMsg == WM_PAINT
         invoke BeginPaint,hWin,ADDR Ps
           mov hDC, eax
-          invoke Paint_Proc,hWin,hDC,0
         invoke EndPaint,hWin,ADDR Ps
         return 0
 
@@ -223,6 +309,7 @@ WndProc proc hWin   :DWORD,
         invoke PostQuitMessage,NULL
         return 0 
     .endif
+    
 
     invoke DefWindowProc,hWin,uMsg,wParam,lParam
 
@@ -230,7 +317,7 @@ WndProc proc hWin   :DWORD,
 
 WndProc endp
 
-; ########################################################################
+; #########################################################################
 
 TopXY proc wDim:DWORD, sDim:DWORD
 
@@ -262,104 +349,18 @@ PushButton endp
 
 ; ########################################################################
 
-Paint_Proc proc hWin:DWORD, hDC:DWORD, movit:DWORD
-
-    LOCAL hOld :DWORD
-    LOCAL memDC:DWORD
-    LOCAL var1 :DWORD
-    LOCAL var2 :DWORD
-    LOCAL var3 :DWORD
-    RGB 255, 255, 255
-
-    mov ebx, eax
-
-    invoke CreateCompatibleDC,hDC
-    mov memDC, eax
-    
-invoke SelectObject,memDC,hBmp
-mov hOld, eax
-
-    .if movit == 0
-  ; -------------------
-  ; for normal repaint
-  ; -------------------
-      ;invoke InvalidateRect, hWin, NULL , TRUE 
-      invoke TransparentBlt, hDC, 0  , 25 , 80, 125, memDC, 0, 0, 80, 125, ebx
-      invoke TransparentBlt, hDC, 80 , 25 , 80, 125, memDC, 0, 0, 80, 125, ebx
-      invoke TransparentBlt, hDC, 160, 25 , 80, 125, memDC, 0, 0, 80, 125, ebx
-      invoke TransparentBlt, hDC, 0  , 150, 80, 125, memDC, 0, 0, 80, 125, ebx
-      invoke TransparentBlt, hDC, 80 , 150, 80, 125, memDC, 0, 0, 80, 125, ebx
-      invoke TransparentBlt, hDC, 160, 150, 80, 125, memDC, 0, 0, 80, 125, ebx
-      invoke TransparentBlt, hDC, 0  , 275, 80, 125, memDC, 0, 0, 80, 125, ebx
-      invoke TransparentBlt, hDC, 80 , 275, 80, 125, memDC, 0, 0, 80, 125, ebx
-      invoke TransparentBlt, hDC, 160, 275, 80, 125, memDC, 0, 0, 80, 125, ebx
-
-    .else
-  ; --------------------------
-  ; when you press the button
-  ; --------------------------
-    ; ********************************************************
-
-    mov var3, 0
-
-    .while var3 < 4     ;<< set the number of times image is looped
-
-      mov var1, 0
-      .while var1 < 320 ;<<  Bitmap width
-      ; ------------------------------------------------
-      ; Read across the double bitmap 1 pixel at a time
-      ; and display a set rectangle size on the screen
-      ; ------------------------------------------------
-        ;invoke InvalidateRect, hWin, NULL , TRUE 
-        invoke TransparentBlt, hDC, 0  , 25 , 80, 125, memDC, var1, 0, 80, 125, ebx
-        invoke TransparentBlt, hDC, 80 , 25 , 80, 125, memDC, var1, 0, 80, 125, ebx
-        invoke TransparentBlt, hDC, 160, 25 , 80, 125, memDC, var1, 0, 80, 125, ebx
-        invoke TransparentBlt, hDC, 0  , 150, 80, 125, memDC, var1, 0, 80, 125, ebx
-        invoke TransparentBlt, hDC, 80 , 150, 80, 125, memDC, var1, 0, 80, 125, ebx
-        invoke TransparentBlt, hDC, 160, 150, 80, 125, memDC, var1, 0, 80, 125, ebx
-        invoke TransparentBlt, hDC, 0  , 275, 80, 125, memDC, var1, 0, 80, 125, ebx
-        invoke TransparentBlt, hDC, 80 , 275, 80, 125, memDC, var1, 0, 80, 125, ebx
-        invoke TransparentBlt, hDC, 160, 275, 80, 125, memDC, var1, 0, 80, 125, ebx
-
-      ; -----------------------
-      ; Simple delay technique
-      ; -----------------------
-        invoke GetTickCount
-        mov var2, eax
-        add var2, 100    ; nominal milliseconds delay
-
-        .while eax < var2
-          invoke GetTickCount
-        .endw
-
-;        inc var1
-          add var1, 80 
-      .endw
-
-    inc var3
-    .endw
-
-    ; ********************************************************
-
-    .endif
-
-    invoke SelectObject,hDC,hOld
-    invoke DeleteDC,memDC
-
-    return 0
-
-Paint_Proc endp
-
-; ########################################################################
-
-ThreadProc PROC USES ecx Param:DWORD
-    LOCAL  var1  :DWORD
-    LOCAL  hDC   :DWORD
-    LOCAL  hDC2  :DWORD
+ThreadProc PROC USES ecx Param:DWORD, hWin:DWORD
+    LOCAL var1   :DWORD
+    LOCAL var2   :DWORD
+    LOCAL var3   :DWORD
+    LOCAL aux    :DWORD
+    LOCAL hDC    :DWORD
+    LOCAL hDC2   :DWORD
     LOCAL hOld   :DWORD
     LOCAL hOld2  :DWORD
     LOCAL memDC  :DWORD
     LOCAL memDC2 :DWORD
+    LOCAL rec    :RECT
 
     RGB 255, 255, 255
 
@@ -367,6 +368,8 @@ ThreadProc PROC USES ecx Param:DWORD
 
 
         mov     var1,0
+        mov     var2,0
+        mov     aux ,0
 
         .WHILE EventStop == FALSE
 
@@ -381,38 +384,189 @@ ThreadProc PROC USES ecx Param:DWORD
                  invoke ResetEvent, hEventStop
                  mov    EventStop, TRUE
 
-             .else   ;; Time out
-        ;        invoke PostMessage, hWnd, WM_OK, NULL,NULL
-
-
-                invoke GetDC, hWnd
+             .elseif erros < 3   ;; Time out
+                ;invoke PostMessage, hWnd, WM_OK, NULL,NULL
+                invoke  GetDC, hWnd
                 mov     hDC2,eax
 
                 invoke CreateCompatibleDC,hDC2
                 mov memDC2, eax
-                invoke SelectObject,memDC2,hBmp2
+                invoke SelectObject,memDC2,hBmp
                 mov hOld2, eax
 
-                invoke BitBlt,hDC2,0,0,240,443,memDC2,0,0,SRCCOPY
+                .if recomecou == 1
+                    mov var1,0
+                    mov var2,0
+                    mov aux, 0
+                    mov recomecou, 0
+                .endif
 
+                .if erros == 0
+                    invoke BitBlt,hDC2,30,380,45,45,memDC2,0,0,SRCCOPY
+                    invoke BitBlt,hDC2,75,380,45,45,memDC2,0,0,SRCCOPY
+                    invoke BitBlt,hDC2,120,380,45,45,memDC2,0,0,SRCCOPY
+                .elseif erros == 1
+                    invoke BitBlt,hDC2,30,380,45,45,memDC2,0,0,SRCCOPY
+                    invoke BitBlt,hDC2,75,380,45,45,memDC2,0,0,SRCCOPY
+                    invoke BitBlt,hDC2,120,380,45,45,memDC2,45,0,SRCCOPY
+                .elseif erros == 2
+                    invoke BitBlt,hDC2,30,380,45,45,memDC2,0,0,SRCCOPY
+                    invoke BitBlt,hDC2,75,380,45,45,memDC2,45,0,SRCCOPY
+                    invoke BitBlt,hDC2,120,380,45,45,memDC2,45,0,SRCCOPY
+                .endif
+
+                ;invoke BitBlt,hDC2,0,0,240,443,memDC2,0,0,SRCCOPY
+
+                
+                
                 invoke GetDC, hWnd
                 mov     hDC,eax
+                
+                ;invoke BitBlt,hDC2,0,0,240,443,memDC2,0,0,SRCCOPY 
 
                 invoke CreateCompatibleDC,hDC
                 mov memDC, eax
-                invoke SelectObject,memDC,hBmp
+                invoke SelectObject,memDC,hBmp2
                 mov hOld, eax
 
-                ;invoke InvalidateRect, hWin, NULL , TRUE 
-                invoke TransparentBlt, hDC, 0  , 25 , 80, 125, memDC, var1, 0, 80, 125, ebx
-                invoke TransparentBlt, hDC, 80 , 25 , 80, 125, memDC, var1, 0, 80, 125, ebx
-                invoke TransparentBlt, hDC, 160, 25 , 80, 125, memDC, var1, 0, 80, 125, ebx
-                invoke TransparentBlt, hDC, 0  , 150, 80, 125, memDC, var1, 0, 80, 125, ebx
-                invoke TransparentBlt, hDC, 80 , 150, 80, 125, memDC, var1, 0, 80, 125, ebx
-                invoke TransparentBlt, hDC, 160, 150, 80, 125, memDC, var1, 0, 80, 125, ebx
-                invoke TransparentBlt, hDC, 0  , 275, 80, 125, memDC, var1, 0, 80, 125, ebx
-                invoke TransparentBlt, hDC, 80 , 275, 80, 125, memDC, var1, 0, 80, 125, ebx
-                invoke TransparentBlt, hDC, 160, 275, 80, 125, memDC, var1, 0, 80, 125, ebx
+                .if var2 == 0 
+                    ;invoke TransparentBlt, hDC, 0  , 25 , 80, 125, memDC, var1, 0, 80, 125, ebx
+                    invoke BitBlt,hDC,0,0,80,125,memDC,var1,0,SRCCOPY
+                    invoke BitBlt,hDC,80,0,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,160,0,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,0,120,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,80,120,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,160,120,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,0,240,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,80,240,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,160,240,80,125,memDC,0,0,SRCCOPY
+                .endif
+                
+                .if var2 == 1 
+                    ;invoke TransparentBlt, hDC, 80 , 25 , 80, 125, memDC, var1, 0, 80, 125, ebx
+                    invoke BitBlt,hDC,80,0,80,125,memDC,var1,0,SRCCOPY
+                    invoke BitBlt,hDC,0,0,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,160,0,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,0,120,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,80,120,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,160,120,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,0,240,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,80,240,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,160,240,80,125,memDC,0,0,SRCCOPY
+                .endif
+                
+                .if var2 == 2
+                    ;invoke TransparentBlt, hDC, 160, 25 , 80, 125, memDC, var1, 0, 80, 125, ebx
+                    invoke BitBlt,hDC,160,0,80,125,memDC,var1,0,SRCCOPY
+                    invoke BitBlt,hDC,0,0,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,80,0,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,0,120,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,80,120,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,160,120,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,0,240,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,80,240,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,160,240,80,125,memDC,0,0,SRCCOPY
+                .endif
+                
+                .if var2 == 3
+                    ;invoke TransparentBlt, hDC, 0  , 150, 80, 125, memDC, var1, 0, 80, 125, ebx
+                    invoke BitBlt,hDC,0,120,80,125,memDC,var1,0,SRCCOPY
+                    invoke BitBlt,hDC,0,0,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,80,0,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,160,0,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,80,120,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,160,120,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,0,240,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,80,240,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,160,240,80,125,memDC,0,0,SRCCOPY
+                .endif
+                
+                .if var2 == 4 
+                    ;invoke TransparentBlt, hDC, 80 , 150, 80, 125, memDC, var1, 0, 80, 125, ebx
+                    invoke BitBlt,hDC,80,120,80,125,memDC,var1,0,SRCCOPY
+                    invoke BitBlt,hDC,0,0,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,80,0,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,160,0,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,0,120,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,160,120,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,0,240,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,80,240,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,160,240,80,125,memDC,0,0,SRCCOPY
+                .endif
+                
+                .if var2 == 5 
+                    ;invoke TransparentBlt, hDC, 160, 150, 80, 125, memDC, var1, 0, 80, 125, ebx
+                    invoke BitBlt,hDC,160,120,80,125,memDC,var1,0,SRCCOPY
+                    invoke BitBlt,hDC,0,0,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,80,0,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,160,0,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,0,120,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,80,120,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,0,240,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,80,240,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,160,240,80,125,memDC,0,0,SRCCOPY
+                .endif
+                
+                .if var2 == 6 
+                    ;invoke TransparentBlt, hDC, 0  , 275, 80, 125, memDC, var1, 0, 80, 125, ebx
+                    invoke BitBlt,hDC,0,240,80,125,memDC,var1,0,SRCCOPY
+                    invoke BitBlt,hDC,0,0,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,80,0,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,160,0,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,0,120,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,80,120,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,160,120,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,80,240,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,160,240,80,125,memDC,0,0,SRCCOPY
+                .endif
+                
+                .if var2 == 7 
+                    ;invoke TransparentBlt, hDC, 80 , 275, 80, 125, memDC, var1, 0, 80, 125, ebx
+                    invoke BitBlt,hDC,80,240,80,125,memDC,var1,0,SRCCOPY
+                    invoke BitBlt,hDC,0,0,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,80,0,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,160,0,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,0,120,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,80,120,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,160,120,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,0,240,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,160,240,80,125,memDC,0,0,SRCCOPY
+                .endif
+                
+                .if var2 == 8 
+                    ;invoke TransparentBlt, hDC, 160, 275, 80, 125, memDC, var1, 0, 80, 125, ebx
+                    invoke BitBlt,hDC,160,240,80,125,memDC,var1,0,SRCCOPY
+                    invoke BitBlt,hDC,0,0,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,80,0,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,160,0,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,0,120,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,80,120,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,160,120,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,0,240,80,125,memDC,0,0,SRCCOPY
+                    invoke BitBlt,hDC,80,240,80,125,memDC,0,0,SRCCOPY
+                .endif
+
+                ;-------------------- delay -------------------
+                
+                invoke GetTickCount
+                mov var3, eax
+                ;.if acertos < 5
+                    ;add var3, 1000    ; nominal milliseconds delay
+                ;.elseif acertos < 10
+                    ;add var3, 500
+                ;.elseif acertos < 10
+                    add var3, 400
+                ;.elseif acertos < 15
+                    ;add var3, 250
+                ;.elseif acertos < 25
+                    ;add var3, 100
+                ;.else
+                    ;add var3, 50
+                 ;.endif
+                 
+                .while eax < var3
+                    invoke GetTickCount
+                .endw
                 
                 invoke SelectObject,hDC,hOld
                 invoke DeleteDC,memDC
@@ -420,11 +574,39 @@ ThreadProc PROC USES ecx Param:DWORD
                 invoke ReleaseDC, hWnd,hDC
 
                 add  var1, 80
-
-                .if var1 > 320
-                    mov     var1,0
+                
+                mov cabecacima,0
+                
+                .if var1 == 160
+                   mov cabecacima,1
                 .endif
-             .endif   
+
+                .if var1 > 160
+
+                    .if acertos == 0
+                        inc erros
+                    .elseif
+                        mov acertos, 0
+
+                    mov     aux ,0
+                    mov     var1,0
+                    add     var2,1
+                    add     auxiliar,1
+                    
+                    .if var2 > 8   
+                        mov     var2,0 
+                        mov     auxiliar,0
+                    .endif
+                    
+                    .endif
+                    
+                .endif
+             .elseif erros == 3
+                  inc erros
+                  invoke PostMessage, hWnd, WM_OK, NULL,NULL
+             .endif
+             
+             ;invoke InvalidateRect, hWnd , NULL, TRUE
 
         .ENDW
         

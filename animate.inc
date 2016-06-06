@@ -28,13 +28,13 @@
 
         ;=================
         ; Local prototypes
-        ;=================
+        ;=================]
         WinMain PROTO :DWORD,:DWORD,:DWORD,:DWORD
         WndProc PROTO :DWORD,:DWORD,:DWORD,:DWORD
         TopXY PROTO   :DWORD,:DWORD
         FillBuffer   PROTO :DWORD,:DWORD,:BYTE
-        Paint_Proc   PROTO :DWORD,:DWORD,:DWORD
         PushButton   PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+	Procedimento PROTO :DWORD
 
       ;=============
       ; Local macros
@@ -72,6 +72,7 @@
         hIcon         dd 0
         hBmp          dd 0
 	hBmp2	      dd 0
+	hBmp3         dd 0
         szDisplayName db "Animate",0
         
 
